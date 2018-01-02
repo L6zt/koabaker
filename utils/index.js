@@ -24,8 +24,13 @@
 		}
 		return true
 	}
-	
+	const loadRouterMoudles = (router, cbArgs = []) => {
+		cbArgs.forEach(cb => {
+			cb(router)
+		})
+	}
 	module.exports = {
 		add,
-		checkArg
+		checkArg,
+		loadRouterMoudles
 	}

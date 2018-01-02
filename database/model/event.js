@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
 			}
 		},
 		create_time: {
-			type: Sequelize.STRING,
+			type: Sequelize.DATE,
 			defaultValue: DataTypes.NOW
 		}
 	},{

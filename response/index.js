@@ -28,6 +28,12 @@
 			    }
 			    break
 			 }
+			 case 500: {
+			 	response = {
+			 		flag: 500,
+				    errMsg: '服务器错误'
+			    }
+			 }
 			 default: {
 			 	response = {
 			 		flag,
