@@ -11,7 +11,7 @@
 					is: /^[a-z]+$/i
 				}
 			},
-			password: Sequelize.STRING(12),
+			password: Sequelize.STRING(64),
 			role: Sequelize.INTEGER(2)
 		},{
 			timestamps: false,

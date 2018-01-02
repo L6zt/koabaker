@@ -9,9 +9,11 @@
 			idle: 10000
 		}
 	})
-	const user = sequelize.import(__dirname + "/model/user")
+	const user = sequelize.import(`${__dirname}/model/user`)
+	const event = sequelize.import(`${__dirname}/model/event`)
 	module.exports = {
 		sequelize,
-		user
+		user,
+		event
 	}
 	
