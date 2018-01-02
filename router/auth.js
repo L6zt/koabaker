@@ -40,6 +40,10 @@
 			}
 			
 		})
+		router.post('/auth/quit', async ctx => {
+			ctx.session = null
+			ctx.body = success('已退出')
+		})
 		
 	}
 	module.exports = auth
