@@ -28,7 +28,7 @@
 			if (checkArg([name, password])) {
 				try {
 					const result = await getLoginMsg(name, password)
-					result && result.role && (ctx.session.user = {name, role: result.role})
+					result && result.role && (ctx.session.user = {name, role: result.role, uuid: result.uuid})
 					!result && (ctx.session = null)
 					ctx.body = success(result)
 				}
