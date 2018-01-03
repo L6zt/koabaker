@@ -3,7 +3,10 @@
 		return sequelize.define('user', {
 			uuid: {
 				type: Sequelize.INTEGER(8).UNSIGNED,
-				primaryKey: true
+				primaryKey: true,
+				unique: true,
+				autoIncrement: true,
+				allowNull: false
 			},
 			name: {
 				type: Sequelize.STRING(8),
@@ -12,7 +15,12 @@
 				}
 			},
 			password: Sequelize.STRING(64),
-			role: Sequelize.INTEGER(2)
+			role: {
+				type: Sequelize.INTEGER(2),
+				validate: {
+					is: /\d{1,2}$/
+				}
+			}
 		},{
 			timestamps: false,
 			paranoid: false,

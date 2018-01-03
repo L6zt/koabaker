@@ -21,7 +21,7 @@
 			return data
 		})
 	}
-	const auth = (router) => {
+	const authRouter = (router) => {
 		// router.use('/auth',userAuth)
 		router.post('/auth/login', async ctx => {
 			const {name, password} = ctx.request.body
@@ -33,7 +33,9 @@
 					ctx.body = success(result)
 				}
 				catch (e) {
-					ctx.body = fail(e)
+					ctx.body = fail({
+						errMsg: e
+					})
 				}
 			} else {
 				ctx.body = fail({flag: 222})
@@ -46,4 +48,4 @@
 		})
 		
 	}
-	module.exports = auth
+	module.exports = authRouter

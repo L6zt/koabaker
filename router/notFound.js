@@ -1,7 +1,7 @@
 const {fail} = require('../response')
-const notFound = (router) => {
+const notFoundRouter = (router) => {
 	router.all('*',  async ctx => {
 		ctx.body = fail({flag: 404})
 	})
 }
-module.exports = notFound
+module.exports = notFoundRouter
