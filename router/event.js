@@ -1,8 +1,19 @@
-const {sequelize, event} = require('../database/index')
+const Sequelize = require('sequelize')
+const {Op} = Sequelize
+const {sequelize, Event, User} = require('../database/index')
 const {success, fail} = require('../response')
 const {checkArg} = require('../utils/index')
-const md5 = require('blueimp-md5')
 // 获取用户信息
+User.hasMany( Event, {
+	foreignKey: 'postid',
+	targetKey: 'uuid',
+	as: 'post'
+})
+User.hasMany( Event, {
+	foreignKey: 'solveid',
+	targetKey: 'uuid',
+	as: 'solve'
+})
 const userAuth = (role) => {
 	return  async (ctx, next) => {
 		if(ctx.session.user === null) {
@@ -17,14 +28,14 @@ const userAuth = (role) => {
 	}
 }
 const createEvent = ({title, url, content, uuid}) => {
-	return event.create({
+	return Event.create({
 		title, url, content, postid: uuid
 	}).then(data => {
 		return data
 	})
 }
 const deleteEvent = ({uuid, postid}) => {
-	return event.destroy({
+	return Event.destroy({
 		where: {
 			uuid,
 			postid
@@ -33,6 +44,20 @@ const deleteEvent = ({uuid, postid}) => {
 		return data
 	})
 }
+const getList = (postid) => {
+	return User.findAll({
+		// where: {
+		// 	uuid: postid
+		// },
+		include: [
+			{
+				model: Event,
+				as: 'post'
+			}
+		]
+	})
+}
+
 const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
 	router.post('/event/create', userAuth(1) ,async ctx => {
@@ -62,6 +87,17 @@ const eventRouter = (router) => {
 		} else {
 			ctx.body = fail({flag: 222})
 		}
+	})
+	
+	//测试联表查询 ...
+	router.post('/event/getList', async ctx => {
+		const {user: {uuid: postid}} = ctx.session
+			try {
+				const result = await getList(postid)
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
 	})
 }
 module.exports = eventRouter

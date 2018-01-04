@@ -1,5 +1,5 @@
 const Sequelize =  require('sequelize')
-const {sequelize, user} = require('../database/index')
+const {sequelize, User} = require('../database/index')
 const {Op} = Sequelize
 const {success, fail} = require('../response')
 const {checkArg} = require('../utils/index')
@@ -20,7 +20,7 @@ const userAuth = (role) => {
 }
 // 获取用户信息
 const checkExist = (name) => {
-	return user.findOne({
+	return User.findOne({
 		where: {
 			name
 		}
@@ -33,7 +33,7 @@ const checkExist = (name) => {
 }
 // 查找所用的 用户列表 在role 1下
 const getAllUser = () => {
-	return user.findAndCountAll()
+	return User.findAndCountAll()
 		.then(data => {
 			data
 		})
@@ -52,7 +52,7 @@ const getWorkUser = () => {
 	})
 }
 const getManagerUser = () => {
-	return user.findAndCountAll({
+	return User.findAndCountAll({
 		where: {
 			role: 2
 		}
@@ -61,7 +61,7 @@ const getManagerUser = () => {
 	})
 }
 const deleteUser = (name) => {
-	return user.destroy({
+	return User.destroy({
 		where: {
 			name
 		}
@@ -72,7 +72,7 @@ const deleteUser = (name) => {
 const createUser = (name, password, role) => {
 	// 强制 role > 2 create upsert
 	parseInt(role) < 2 && (role = 2)
-	return user.upsert({
+	return User.upsert({
 			name,
 			password: md5(password),
 			role

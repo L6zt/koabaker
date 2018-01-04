@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
 			type: Sequelize.STRING(255)
 		},
 		content: {
-			type: Sequelize.STRING
+			type: Sequelize.TEXT
 		},
 		postid: {
 			type: Sequelize.INTEGER(8).UNSIGNED,

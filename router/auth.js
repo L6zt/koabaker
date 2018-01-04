@@ -1,4 +1,4 @@
-	const {sequelize, user} = require('../database/index')
+	const {sequelize, User} = require('../database/index')
 	const {success, fail} = require('../response')
 	const {checkArg} = require('../utils/index')
 	const md5 = require('blueimp-md5')
@@ -11,8 +11,8 @@
 	}
 	// 获取用户信息
 	const getLoginMsg = (name, password) => {
-		return user.findOne({
-			attributes: ['name', 'role'],
+		return User.findOne({
+			attributes: ['name', 'role', 'uuid'],
 			where: {
 				name: name,
 				password: md5(password)
