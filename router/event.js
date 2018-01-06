@@ -4,16 +4,17 @@ const {sequelize, Event, User} = require('../database/index')
 const {success, fail} = require('../response')
 const {checkArg} = require('../utils/index')
 // 获取用户信息
-User.hasMany( Event, {
-	foreignKey: 'postid',
-	targetKey: 'uuid',
-	as: 'post'
-})
-User.hasMany( Event, {
-	foreignKey: 'solveid',
-	targetKey: 'uuid',
-	as: 'solve'
-})
+// User.hasMany( Event, {
+// 	foreignKey: 'postid',
+// 	targetKey: 'uuid',
+// 	as: 'post'
+// })
+// User.hasMany( Event, {
+// 	foreignKey: 'solveid',
+// 	targetKey: 'uuid',
+// 	as: 'solve'
+// })
+// Event.belongsTo(User)
 const userAuth = (role) => {
 	return  async (ctx, next) => {
 		if(ctx.session.user === null) {
@@ -45,10 +46,12 @@ const deleteEvent = ({uuid, postid}) => {
 	})
 }
 const getList = (postid) => {
+	
 	return User.findAll({
-		// where: {
-		// 	uuid: postid
-		// },
+		order: [
+			['name', 'ASC'],
+			[{model: Event, as: 'post'}, 'create_time', 'DESC']
+		],
 		include: [
 			{
 				model: Event,
@@ -88,16 +91,20 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	
+	/*
+	 select user.name as pname, p.sname as sname, p.solveid as solveid,
+	 p.postid as postid from user join (select user.name as sname, event.solveid as solveid ,
+	 event.postid as postid from user right join event on user.uuid = event.solveid) as p on user.uuid = p.postid;
+	*/
 	//测试联表查询 ...
-	router.post('/event/getList', async ctx => {
-		const {user: {uuid: postid}} = ctx.session
-			try {
-				const result = await getList(postid)
-				ctx.body = success(result)
-			} catch (e) {
-				ctx.body = fail({errMsg: e})
-			}
-	})
+	// router.post('/event/getList', async ctx => {
+	// 	const {user: {uuid: postid}} = ctx.session
+	// 		try {
+	// 			const result = await getList(postid)
+	// 			ctx.body = success(result)
+	// 		} catch (e) {
+	// 			ctx.body = fail({errMsg: e})
+	// 		}
+	// })
 }
 module.exports = eventRouter

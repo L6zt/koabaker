@@ -11,9 +11,13 @@
 	})
 	const User = sequelize.import(`${__dirname}/model/user`)
 	const Event = sequelize.import(`${__dirname}/model/event`)
+	const PeventResult = sequelize.import(`${__dirname}/model/p_event_result`)
+	const SeventResult = sequelize.import(`${__dirname}/model/s_event_result`)
 	module.exports = {
 		sequelize,
 		User,
-		Event
+		Event,
+		PeventResult,
+		SeventResult
 	}
 	
