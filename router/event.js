@@ -17,10 +17,11 @@ const {checkArg} = require('../utils/index')
 // Event.belongsTo(User)
 const userAuth = (role) => {
 	return  async (ctx, next) => {
-		if(ctx.session.user === null) {
+		const {user} = ctx.session
+		if(user === null || user === undefined) {
 			ctx.body = fail({flag: 999, errMsg:'未登陆，请登陆'})
 		} else  {
-			if (parseInt(ctx.session.user.role) <= role) {
+			if (parseInt(user.role) <= role) {
 				await next()
 			}
 			else {
@@ -45,22 +46,36 @@ const deleteEvent = ({uuid, postid}) => {
 		return data
 	})
 }
+/*
+ select user.name as pname, p.sname as sname, p.solveid as solveid,
+ p.postid as postid from user join (select user.name as sname, event.solveid as solveid ,
+ event.postid as postid from user right join event on user.uuid = event.solveid) as p on user.uuid = p.postid;
+*/
+// const getList = (postid) => {
+//
+// 	return User.findAll({
+// 		order: [
+// 			['name', 'ASC'],
+// 			[{model: Event, as: 'post'}, 'create_time', 'DESC']
+// 		],
+// 		include: [
+// 			{
+// 				model: Event,
+// 				as: 'post'
+// 			}
+// 		]
+// 	})
+// }
 const getList = (postid) => {
-	
-	return User.findAll({
-		order: [
-			['name', 'ASC'],
-			[{model: Event, as: 'post'}, 'create_time', 'DESC']
-		],
-		include: [
-			{
-				model: Event,
-				as: 'post'
-			}
-		]
-	})
+	let str = 'select p.uuid as uuid, user.name as pname, p.sname as sname, p.solveid as solveid,' +
+		' p.postid as postid, p.sstatus as sstatus, p.pstatus as pstatus, p.create_time as create_time from user join (select user.name as sname, event.uuid as uuid, event.create_time as create_time,  event.solveid as solveid ,event.sstatus as sstatus, event. pstatus as pstatus,event.postid as postid from user ' +
+		'right join event on user.uuid = event.solveid) as p on user.uuid = p.postid'
+	postid && (str = `${str} where p.postid  = ${postid}`)
+	return sequelize.query( str,{type: sequelize.QueryTypes.SELECT})
+		.then(data => {
+			return data
+		})
 }
-
 const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
 	router.post('/event/create', userAuth(1) ,async ctx => {
@@ -77,7 +92,7 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	router.post('/event/delete', async ctx => {
+	router.post('/event/delete',userAuth(2), async ctx => {
 		const {uuid} = ctx.request.body
 		const {user: {uuid: postid}} = ctx.session
 		if (checkArg([uuid])) {
@@ -91,20 +106,18 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	/*
-	 select user.name as pname, p.sname as sname, p.solveid as solveid,
-	 p.postid as postid from user join (select user.name as sname, event.solveid as solveid ,
-	 event.postid as postid from user right join event on user.uuid = event.solveid) as p on user.uuid = p.postid;
-	*/
-	//测试联表查询 ...
-	// router.post('/event/getList', async ctx => {
-	// 	const {user: {uuid: postid}} = ctx.session
-	// 		try {
-	// 			const result = await getList(postid)
-	// 			ctx.body = success(result)
-	// 		} catch (e) {
-	// 			ctx.body = fail({errMsg: e})
-	// 		}
-	// })
+
+	// 事件列表  状态 未派遣 进行中 已完成
+	router.post('/event/getList', userAuth(2), async ctx => {
+		const {user: {uuid: postid}} = ctx.session
+			try {
+				let result
+				ctx.session.user.role === 1 ?  result = await getList() : result = await getList(postid)
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+	})
+	
 }
 module.exports = eventRouter

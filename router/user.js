@@ -7,10 +7,11 @@ const md5 = require('blueimp-md5')
 // 中间件 鉴权
 const userAuth = (role) => {
 	return  async (ctx, next) => {
-		if(ctx.session.user === null) {
+		const {user} = ctx.session
+		if(user === null || user === undefined) {
 			ctx.body = fail({flag: 999, errMsg:'未登陆，请登陆'})
 		} else  {
-			if (parseInt(ctx.session.user.role) <= role) {
+			if (parseInt(user.role) <= role) {
 				await next()
 			}
 			else {
