@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize')
 const {Op} = Sequelize
-const {sequelize, Event, User} = require('../database/index')
+const {sequelize, Event, User,PeventResult, SeventResult} = require('../database/index')
 const {success, fail} = require('../response')
 const {checkArg} = require('../utils/index')
 // 获取用户信息
@@ -67,14 +67,47 @@ const deleteEvent = ({uuid, postid}) => {
 // 	})
 // }
 const getList = (postid) => {
-	let str = 'select p.uuid as uuid, user.name as pname, p.sname as sname, p.solveid as solveid,' +
-		' p.postid as postid, p.sstatus as sstatus, p.pstatus as pstatus, p.create_time as create_time from user join (select user.name as sname, event.uuid as uuid, event.create_time as create_time,  event.solveid as solveid ,event.sstatus as sstatus, event. pstatus as pstatus,event.postid as postid from user ' +
-		'right join event on user.uuid = event.solveid) as p on user.uuid = p.postid'
-	postid && (str = `${str} where p.postid  = ${postid}`)
+	let str = 'select p.uuid as uuid, s.name as p_name, p.s_name as s_name, p.solve_id as solve_id,' +
+		' p.post_id as post_id, p.s_status as s_status, p.p_status as p_status, p.create_time as create_time from user as s join ' +
+		'(select s.name as s_name, e.uuid as uuid, e.create_time as create_time,  e.solveid as solve_id ,e.sstatus as s_status, e. pstatus as p_status, e.postid as post_id from user as s ' +
+		'right join event as e on s.uuid = e.solveid) as p on s.uuid = p.post_id'
+	postid && (str = `${str} where p.post_id  = ${postid}`)
 	return sequelize.query( str,{type: sequelize.QueryTypes.SELECT})
 		.then(data => {
 			return data
 		})
+}
+const getUserMsg = (uuid) => {
+	return User.findOne({
+		attributes: ['name', 'uuid'],
+		where: {
+			uuid
+		}
+	}).then(data => data)
+}
+const getThisEvent = (uuid) => {
+	return Event.findOne({
+		where: {
+			uuid
+		}
+	}).then(data => data)
+}
+const getEventAllComment = (uuid) => {
+	return sequelize.query('select * from (select * from p_event_result where uuid = :uuid union select * from s_event_result where uuid = :uuid) as al order by al.create_time asc',
+		{replacements: {uuid}, type: sequelize.QueryTypes.SELECT})
+		.then(data => data)
+}
+const mgEventComment = ({uuid, comment}) => {
+	return PeventResult.upsert({
+		uuid,
+		comment
+	}).then(data => data)
+}
+const slEventComment = ({uuid, comment}) => {
+	return SeventResult.upsert({
+		uuid,
+		comment
+	}).then(data => data)
 }
 const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
@@ -118,6 +151,54 @@ const eventRouter = (router) => {
 				ctx.body = fail({errMsg: e})
 			}
 	})
-	
+	router.post('/event/getEventDetail', userAuth(2), async ctx => {
+		const {uuid} = ctx.request.body
+		const {user: {name, role}} = ctx.session
+		if (checkArg([uuid])) {
+			try {
+				const event = await getThisEvent(uuid)
+				const {postid, solveid} =  event
+				const postMsg = await getUserMsg(postid)
+				const solveMsg = await getUserMsg(solveid)
+				const comments  = await getEventAllComment(uuid)
+				if (name !== postMsg.name && role !== 1) {
+					throw new Error('权限不足')
+				}
+				ctx.body = success({event, postMsg, solveMsg, comments})
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+		} else {
+			ctx.body = fail({flag: 222})
+		}
+	})
+	router.post('/event/mg/event', userAuth(8), async ctx => {
+		const {uuid, comment} = ctx.request.body
+		const {user: {name}} = ctx.session
+		if (checkArg([uuid, comment])) {
+			try {
+				const result = await mgEventComment({uuid, comment})
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+		} else {
+			ctx.body = fail({flag: 222})
+		}
+	})
+	router.post('/event/sl/event', userAuth(8), async ctx => {
+		const {uuid, comment} = ctx.request.body
+		const {user: {name}} = ctx.session
+		if (checkArg([uuid, comment])) {
+			try {
+				const result = await slEventComment({uuid, comment})
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+		} else {
+			ctx.body = fail({flag: 222})
+		}
+	})
 }
 module.exports = eventRouter
