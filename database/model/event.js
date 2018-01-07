@@ -28,6 +28,14 @@ module.exports = (sequelize, DataTypes) => {
 				key: 'uuid'
 			}
 		},
+		pstatus: {
+			type: Sequelize.INTEGER(1).UNSIGNED,
+			default: 0
+		},
+		sstatus: {
+			type: Sequelize.INTEGER(1).UNSIGNED,
+			default: 0
+		},
 		create_time: {
 			type: Sequelize.DATE,
 			defaultValue: DataTypes.NOW

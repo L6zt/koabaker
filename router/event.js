@@ -109,6 +109,27 @@ const slEventComment = ({uuid, comment}) => {
 		comment
 	}).then(data => data)
 }
+const mgEventHanleStatus = ({uuid, postid, status})  => {
+	return Event.update({
+		pstatus: status
+	}, {
+		where: {
+			uuid,
+			postid
+		}
+	})
+}
+const slEventHanleStatus = ({uuid, sloveid, status})  => {
+	return Event.update({
+		sstatus: status
+	},{
+			where: {
+				uuid,
+				solveid
+			}
+		}
+	)
+}
 const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
 	router.post('/event/create', userAuth(1) ,async ctx => {
@@ -192,6 +213,35 @@ const eventRouter = (router) => {
 		if (checkArg([uuid, comment])) {
 			try {
 				const result = await slEventComment({uuid, comment})
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+		} else {
+			ctx.body = fail({flag: 222})
+		}
+	})
+	router.post('/event/change/mg/status', userAuth(8), async ctx => {
+		const {uuid, status} = ctx.request.body
+		const {uuid: postid} = ctx.session.user
+		console.log(uuid)
+		if (checkArg([uuid, status])) {
+			try {
+				const result = await mgEventHanleStatus({uuid, status, postid})
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+		} else {
+			ctx.body = fail({flag: 222})
+		}
+	})
+	router.post('/event/change/sl/status', userAuth(8), async ctx => {
+		const {uuid, status} = ctx.request.body
+		const {uuid: solveid} = ctx.session.user
+		if (checkArg([uuid, status])) {
+			try {
+				const result = await slEventHanleStatus({uuid, status, solveid})
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
