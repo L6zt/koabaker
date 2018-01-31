@@ -1,3 +1,4 @@
+	const fs = require('fs')
 	let uuid = 0
 	const add = (ag = 'index') => {
 		return`${ag}  ${uuid++}`

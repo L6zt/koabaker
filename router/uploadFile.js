@@ -1,7 +1,8 @@
+	const {uploadDir, uploadDomain} = require('../config')
 	const body = require('koa-body')
 	const path = require('path')
 	const fs = require('fs')
-	const dir = path.resolve(__dirname, '../uploads/temp')
+	const dir = uploadDir
 	const {success, fail} = require('../response')
 	const {validateImg} = require('../utils/index')
 	const eFlag = 101

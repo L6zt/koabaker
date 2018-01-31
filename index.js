@@ -1,3 +1,4 @@
+	require('./init')
 	const Koa = require('koa')
 	const session = require('koa-session')
 	const body = require('koa-body')
