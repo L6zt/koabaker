@@ -29,9 +29,21 @@
 			cb(router)
 		})
 	}
+	const validateImg = (type) => {
+	        const typeList = [
+	        	'image/jpeg',
+		        'image/jpeg'
+	        ]
+		  const index = typeList.findIndex(item => item === type)
+		  if (index === -1) {
+	        return false
+		  }
+		  return true
+	}
 	module.exports = {
 		add,
 		checkArg,
-		loadRouterMoudles
+		loadRouterMoudles,
+		validateImg
 	}
 	

@@ -5,6 +5,7 @@
 	const notFoundRouter = require('./notFound')
 	const userRouter = require('./user')
 	const eventRouter = require('./event')
+	const uploadFile = require('./uploadFile')
 	// login in api
-	loadRouterMoudles(router, [authRouter, userRouter,eventRouter, notFoundRouter])
+	loadRouterMoudles(router, [authRouter, userRouter,eventRouter, uploadFile, notFoundRouter])
 	module.exports = router

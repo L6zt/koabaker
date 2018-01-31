@@ -15,6 +15,7 @@ const {checkArg} = require('../utils/index')
 // 	as: 'solve'
 // })
 // Event.belongsTo(User)
+// 鉴权函数是否公用
 const userAuth = (role) => {
 	return  async (ctx, next) => {
 		const {user} = ctx.session
