@@ -225,7 +225,6 @@ const eventRouter = (router) => {
 	router.post('/event/change/mg/status', userAuth(8), async ctx => {
 		const {uuid, status} = ctx.request.body
 		const {uuid: postid} = ctx.session.user
-		console.log(uuid)
 		if (checkArg([uuid, status])) {
 			try {
 				const result = await mgEventHanleStatus({uuid, status, postid})

@@ -12,6 +12,9 @@
 	const isDef = (ag) => {
 		return ag !== null && ag !== undefined
 	}
+	const isNum = (ag) => {
+		return /[0-9]+$/.test(ag)
+	}
 	const checkArg = (args = []) => {
 	// arguments 不能直接使用
 		if (isArray(args) &&  args.length === 0) {
@@ -45,6 +48,7 @@
 		add,
 		checkArg,
 		loadRouterMoudles,
-		validateImg
+		validateImg,
+		isNum
 	}
 	
