@@ -67,6 +67,10 @@ const deleteEvent = ({uuid, postid}) => {
 // 		]
 // 	})
 // }
+// 逻辑 --- 事件查找 （role 1 2 3） 人物信息 m s ; 对应 事件; 只能查看自己的对应的 （事件 role 1 除外）
+// 操作 m s 对 event 事件操作 commit event 提出事件 处理事件 m 对事件有结束 权限 （1）
+// 难点 怎么做到 1...2...3 好的联表查询 分页  count(*) ...
+// 拆分 获取 事件 列表 获取用户信息 
 const getList = (postid) => {
 	let str = 'select p.uuid as uuid, s.name as p_name, p.s_name as s_name, p.solve_id as solve_id,' +
 		' p.post_id as post_id, p.s_status as s_status, p.p_status as p_status, p.create_time as create_time from user as s join ' +

@@ -105,7 +105,6 @@ const userRouter = (router) => {
 		const {name, password, role} = ctx.request.body
 		if (checkArg([name, password, role])) {
 			try {
-				console.log(typeof role)
 				const check = await checkExist(name, password, role)
 				const result = await createUser(name, password, role)
 				ctx.body = success(result)

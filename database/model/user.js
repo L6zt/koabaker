@@ -20,7 +20,14 @@
 				validate: {
 					is: /\d{1,2}$/
 				}
+			},
+			pic: {
+				type: Sequelize.STRING(255)
+			},
+			nick_name: {
+				type: Sequelize.STRING(12)
 			}
+			
 		},{
 			timestamps: false,
 			paranoid: false,
