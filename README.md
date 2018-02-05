@@ -4,3 +4,5 @@
 3. 提供接口api
 ### tip
 node > 8.9 或 该node版本 支持 es7 async await 语法。
+###逻辑图
+![image](https://github.com/L6zt/koabaker/blob/master/project.jpg)
