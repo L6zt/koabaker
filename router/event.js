@@ -82,14 +82,25 @@ const getList = (postid) => {
 			return data
 		})
 }
+// 查找信息
 const getUserMsg = (uuid) => {
 	return User.findOne({
-		attributes: ['name', 'uuid'],
+		attributes: ['name', 'uuid', 'role'],
 		where: {
 			uuid
 		}
 	}).then(data => data)
 }
+// 获取范围信息
+const getRangeUserMsg = (list) => {
+	return User.findOne({
+		attributes: ['name', 'uuid', 'role'],
+		where: {
+			[Op.in]: list
+		}
+	}).then(data => data)
+}
+// 查看事件是否存在
 const getThisEvent = (uuid) => {
 	return Event.findOne({
 		where: {
@@ -97,21 +108,32 @@ const getThisEvent = (uuid) => {
 		}
 	}).then(data => data)
 }
+// 查看 该事件所有 对话
 const getEventAllComment = (uuid) => {
 	return sequelize.query('select * from (select * from p_event_result where uuid = :uuid union select * from s_event_result where uuid = :uuid) as al order by al.create_time asc',
 		{replacements: {uuid}, type: sequelize.QueryTypes.SELECT})
 		.then(data => data)
 }
-const mgEventComment = ({uuid, comment}) => {
+// 获取 对该事件交流的 人
+const getAllCommentPerson = (uuid) => {
+	return sequelize.query('select DISTINCT user_id from (select * from p_event_result where uuid = :uuid union select * from s_event_result where uuid = :uuid) as al order by al.create_time asc',
+		{replacements: {uuid}, type: sequelize.QueryTypes.SELECT})
+		.then(data => data)
+}
+// 管理修改 状态
+const mgEventComment = ({uuid, comment, user_id}) => {
 	return PeventResult.upsert({
 		uuid,
-		comment
+		comment,
+		user_id
 	}).then(data => data)
 }
-const slEventComment = ({uuid, comment}) => {
+// 解决 修改状态
+const slEventComment = ({uuid, comment, user_id}) => {
 	return SeventResult.upsert({
 		uuid,
-		comment
+		comment,
+		user_id
 	}).then(data => data)
 }
 const mgEventHanleStatus = ({uuid, postid, status})  => {
