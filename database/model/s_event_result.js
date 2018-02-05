@@ -9,11 +9,15 @@ module.exports = (sequelize, DataTypes) => {
 		comment: {
 			type: Sequelize.TEXT
 		},
-		solveid: {
+		// 提交人 id
+		user_id: {
 			type: Sequelize.INTEGER(8).UNSIGNED,
-			allowNull: false,
+		},
+		// 事件 id
+		event_id: {
+			type: Sequelize.INTEGER(8).UNSIGNED,
 			references: {
-				model: 'user',
+				model: 'event',
 				key: 'uuid'
 			}
 		},

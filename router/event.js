@@ -137,6 +137,7 @@ const slEventHanleStatus = ({uuid, sloveid, status})  => {
 }
 const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
+	// 事件生成
 	router.post('/event/create', userAuth(1) ,async ctx => {
 		const {title, url, content} = ctx.request.body
 		const {user: {uuid}} = ctx.session
@@ -151,6 +152,7 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
+	// 事件删除
 	router.post('/event/delete',userAuth(2), async ctx => {
 		const {uuid} = ctx.request.body
 		const {user: {uuid: postid}} = ctx.session
@@ -177,6 +179,7 @@ const eventRouter = (router) => {
 				ctx.body = fail({errMsg: e})
 			}
 	})
+	// 事件详情
 	router.post('/event/getEventDetail', userAuth(2), async ctx => {
 		const {uuid} = ctx.request.body
 		const {user: {name, role}} = ctx.session
