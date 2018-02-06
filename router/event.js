@@ -2,7 +2,7 @@ const Sequelize = require('sequelize')
 const {Op} = Sequelize
 const {sequelize, Event, User,PeventResult, SeventResult} = require('../database/index')
 const {success, fail} = require('../response')
-const {checkArg} = require('../utils/index')
+const {checkArg, isNum, uniqKey} = require('../utils/index')
 // 获取用户信息
 // User.hasMany( Event, {
 // 	foreignKey: 'postid',
@@ -83,6 +83,13 @@ const deleteEvent = ({uuid, postid}) => {
 // 			return data
 // 		})
 // }
+const allEventList = ({ pageIndex, pageSize}) => {
+	return Event.findAllCount({
+		offset: (pageIndex - 1) * pageSize,
+		limit: pageSize,
+		order: [['uuid', 'DESC']]
+	})
+}
 const mgEventList = ({postid, pageIndex, pageSize}) => {
 	return Event.findAllCount({
 		where: {
@@ -141,12 +148,6 @@ const getEventAllComment = (uuid) => {
 		{replacements: {uuid}, type: sequelize.QueryTypes.SELECT})
 		.then(data => data)
 }
-// 获取 对该事件交流的 人
-const getAllCommentPerson = (uuid) => {
-	return sequelize.query('select DISTINCT user_id from (select * from p_event_result where uuid = :uuid union select * from s_event_result where uuid = :uuid) as al order by al.create_time asc',
-		{type: sequelize.QueryTypes.SELECT})
-		.then(data => data)
-}
 // 管理修改 状态
 const mgEventComment = ({uuid, comment, user_id}) => {
 	return PeventResult.upsert({
@@ -187,7 +188,7 @@ const slEventHanleStatus = ({uuid, sloveid, status})  => {
 const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
 	// 事件生成
-	router.post('/event/create', userAuth(1) ,async ctx => {
+	router.post('/event/create', userAuth(2) ,async ctx => {
 		const {title, url, content} = ctx.request.body
 		const {user: {uuid}} = ctx.session
 		if (checkArg([title, url, content])) {
@@ -219,30 +220,135 @@ const eventRouter = (router) => {
 
 	// 事件列表  状态 未派遣 进行中 已完成
 	router.post('/event/getList', userAuth(2), async ctx => {
-		const {user: {uuid: postid}} = ctx.session
-			try {
-				let result
-				ctx.session.user.role === 1 ?  result = await getList() : result = await getList(postid)
-				ctx.body = success(result)
-			} catch (e) {
-				ctx.body = fail({errMsg: e})
+		const {user: {uuid: ownid, role}} = ctx.session
+		let {pageIndex, pageSize, postid, solveid} = ctx.request.body
+		let result
+		if (checkArg(pageSize, pageIndex) && isNum(pageIndex) && isNum(pageSize)) {
+			pageSize = parseInt(pageSize)
+			pageIndex = parseInt(pageIndex)
+		} else {
+			ctx.body = fail({flag: 222})
+			return
+		}
+		try {
+			switch (role) {
+				case 1: {
+						let rows, sidList, pidList, sUser, pUser
+						result = await allEventList({pageIndex, pageSize})
+						rows = result.rows
+						if (rows) {
+							sidList = await uniqKey({target: rows, key: 'sloveid'})
+							pidList = await uniqKey({target: rows, key: 'ploveid'})
+							if (sidList) {
+								// 用户列表
+								sUser = await getUserListMsg(sidList)
+							}
+							if (pidList) {
+								pUser = await getUserListMsg(pidList)
+							}
+							ctx.body = success({
+								data: {
+									sUser: sUser || [],
+									pUser: pUser || [],
+									eventList: result
+								}
+							})
+							return
+						}
+						
+						return
+				}
+				case 2: {
+					let rows, sidList, sUser
+					if (checkArg([postid])) {
+						 result = await mgEventList({postid, pageIndex, pageSize})
+						 rows = result.rows
+						 if (rows) {
+						 	sidList = uniqKey({target: rows, key: 'solveid'})
+						 }
+						 if (sidList) {
+						 	sUser = await getUserListMsg(sidList)
+						 }
+						ctx.body = success({
+							data: {
+								sUser: sUser || [],
+								pUser: [],
+								list: result
+							}
+						})
+						return
+					} else {
+						ctx.body = fail({flag: 222})
+						return
+					}
+				}
+				default : {
+					let rows, pidList, pUser
+					if (checkArg([postid])) {
+						result = await mgEventList({solveid, pageIndex, pageSize})
+						rows = result.rows
+						if (rows) {
+							pidList = uniqKey({target: rows, key: 'postid'})
+						}
+						if (pidList) {
+							pUser = await getUserListMsg(pidList)
+						}
+						ctx.body = success({
+							data: {
+								sUser: [],
+								pUser: pUser ||[],
+								list: result
+							}
+						})
+						return
+					} else {
+						ctx.body = fail({flag: 222})
+						return
+					}
+				}
 			}
+			
+			ctx.body = success(result)
+		} catch (e) {
+			ctx.body = fail({errMsg: e})
+		}
 	})
 	// 事件详情
 	router.post('/event/getEventDetail', userAuth(2), async ctx => {
 		const {uuid} = ctx.request.body
-		const {user: {name, role}} = ctx.session
+		const {user: {name, role, uuid: ownid}} = ctx.session
+		let comments, userIdList, userList
 		if (checkArg([uuid])) {
 			try {
-				const event = await getThisEvent(uuid)
-				const {postid, solveid} =  event
-				const postMsg = await getUserMsg(postid)
-				const solveMsg = await getUserMsg(solveid)
-				const comments  = await getEventAllComment(uuid)
-				if (name !== postMsg.name && role !== 1) {
-					throw new Error('权限不足')
+				switch (role) {
+					case 1: {
+						comments  = await getEventAllComment(uuid)
+						break
+					}
+					case 2: {
+						const isHas = await getThisEvent({uuid, postid: ownid})
+						if (isHas) {
+							ctx.body = fail({errMsg: '无查看权限'})
+							return
+						}
+						comments  = await getEventAllComment(uuid)
+						break
+					}
+					default : {
+						const isHas = await getThisEvent({uuid, solveid: ownid})
+						if (isHas) {
+							ctx.body = fail({errMsg: '无查看权限'})
+							return
+						}
+						comments  = await getEventAllComment(uuid)
+						break
+					}
 				}
-				ctx.body = success({event, postMsg, solveMsg, comments})
+				if (comments) {
+					userIdList = uniqKey({target: comments, key: 'user_id'})
+					userList = await getUserListMsg(userIdList)
+				}
+				ctx.body = success({commentList: comments, userList: userList || []})
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
 			}

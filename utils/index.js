@@ -14,7 +14,7 @@
 	}
 	const isNum = (ag) => {
 	// isNuN ?
-		return /[^0][0-9]+$/.test(ag)
+		return /[1-9][0-9]*$/.test(ag)
 	}
 	const uniqKey = ({target, key}) => {
 		const md = {}

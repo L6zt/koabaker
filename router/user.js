@@ -75,9 +75,7 @@ const getManagerUser = (pageIndex, pageSize) => {
 		offset: (pageIndex - 1) * pageSize,
 		limit: pageSize,
 		order: [['uuid', 'DESC']]
-	}).then(data => {
-		return data
-	})
+	}).then(data => data)
 }
 const deleteUser = (name) => {
 	return User.destroy({
@@ -141,13 +139,16 @@ const userRouter = (router) => {
 	// 获取管理人员
 	router.post('/user/getManagerUser', userAuth(1), async ctx => {
 		const {pageIndex, pageSize} = ctx.request.body
-		if (checkArg([pageIndex, pageSize]) && isNum(pageIndex) && isNum(pageIndex)) {
+		console.log( isNum(pageIndex), pageIndex)
+		if (checkArg([pageIndex, pageSize]) && isNum(pageIndex) && isNum(pageSize)) {
 			try {
 				const result = await getManagerUser(parseInt(pageIndex),parseInt(pageSize))
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
 			}
+		} else  {
+			ctx.body = fail({flag: 222})
 		}
 	})
 	// 获取维修员工
