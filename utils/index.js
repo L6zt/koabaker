@@ -13,7 +13,27 @@
 		return ag !== null && ag !== undefined
 	}
 	const isNum = (ag) => {
-		return /[0-9]+$/.test(ag)
+	// isNuN ?
+		return /[^0][0-9]+$/.test(ag)
+	}
+	const uniqKey = ({target, key}) => {
+		const md = {}
+		// 是否为数组
+		if (isArray(target)) {
+			let result
+			target.forEach(item => {
+				const id = item[key]
+				id && (md[id] = null)
+			})
+			result = Object.keys(target)
+			if (result.length === 0) {
+				return null
+			} else {
+				return result
+			}
+		} else {
+			return null
+		}
 	}
 	const checkArg = (args = []) => {
 	// arguments 不能直接使用
@@ -46,6 +66,7 @@
 	}
 	module.exports = {
 		add,
+		uniqKey,
 		checkArg,
 		loadRouterMoudles,
 		validateImg,
