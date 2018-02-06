@@ -30,6 +30,7 @@ const userAuth = (role) => {
 			}}
 	}
 }
+///
 const createEvent = ({title, url, content, uuid}) => {
 	return Event.create({
 		title, url, content, postid: uuid
@@ -71,16 +72,36 @@ const deleteEvent = ({uuid, postid}) => {
 // 操作 m s 对 event 事件操作 commit event 提出事件 处理事件 m 对事件有结束 权限 （1）
 // 难点 怎么做到 1...2...3 好的联表查询 分页  count(*) ...
 // 拆分 获取 事件 列表 获取用户信息 
-const getList = (postid) => {
-	let str = 'select p.uuid as uuid, s.name as p_name, p.s_name as s_name, p.solve_id as solve_id,' +
-		' p.post_id as post_id, p.s_status as s_status, p.p_status as p_status, p.create_time as create_time from user as s join ' +
-		'(select s.name as s_name, e.uuid as uuid, e.create_time as create_time,  e.solveid as solve_id ,e.sstatus as s_status, e. pstatus as p_status, e.postid as post_id from user as s ' +
-		'right join event as e on s.uuid = e.solveid) as p on s.uuid = p.post_id'
-	postid && (str = `${str} where p.post_id  = ${postid}`)
-	return sequelize.query( str,{type: sequelize.QueryTypes.SELECT})
-		.then(data => {
-			return data
-		})
+// const getList = (postid) => {
+// 	let str = 'select p.uuid as uuid, s.name as p_name, p.s_name as s_name, p.solve_id as solve_id,' +
+// 		' p.post_id as post_id, p.s_status as s_status, p.p_status as p_status, p.create_time as create_time from user as s join ' +
+// 		'(select s.name as s_name, e.uuid as uuid, e.create_time as create_time,  e.solveid as solve_id ,e.sstatus as s_status, e. pstatus as p_status, e.postid as post_id from user as s ' +
+// 		'right join event as e on s.uuid = e.solveid) as p on s.uuid = p.post_id'
+// 	postid && (str = `${str} where p.post_id  = ${postid}`)
+// 	return sequelize.query( str,{type: sequelize.QueryTypes.SELECT})
+// 		.then(data => {
+// 			return data
+// 		})
+// }
+const mgEventList = ({postid, pageIndex, pageSize}) => {
+	return Event.findAllCount({
+		where: {
+			postid
+		},
+		offset: (pageIndex - 1) * pageSize,
+		limit: pageSize,
+		order: [['uuid', 'DESC']]
+	})
+}
+const slEventList = ({solveid, pageIndex, pageSize}) => {
+	return Event.findAllCount({
+		where: {
+			solveid
+		},
+		offset: (pageIndex - 1) * pageSize,
+		limit: pageSize,
+		order: [['uuid', 'DESC']]
+	})
 }
 // 查找信息
 const getUserMsg = (uuid) => {
@@ -91,21 +112,27 @@ const getUserMsg = (uuid) => {
 		}
 	}).then(data => data)
 }
-// 获取范围信息
-const getRangeUserMsg = (list) => {
-	return User.findOne({
-		attributes: ['name', 'uuid', 'role'],
+// 获取列表
+const getUserListMsg = (arg) => {
+	return User.findAll({
+		attributes: ['name', 'role', 'uuid'],
 		where: {
-			[Op.in]: list
+			[Op.in]: arg
 		}
 	}).then(data => data)
 }
+
 // 查看事件是否存在
-const getThisEvent = (uuid) => {
+const getThisEvent = ({uuid, postid, solveid}) => {
+	const where = {uuid}
+	if (postid) {
+		Object.assign(where, {postid})
+	} else {
+		Object.assign(where, {solveid})
+	}
+	
 	return Event.findOne({
-		where: {
-			uuid
-		}
+		where
 	}).then(data => data)
 }
 // 查看 该事件所有 对话
@@ -117,7 +144,7 @@ const getEventAllComment = (uuid) => {
 // 获取 对该事件交流的 人
 const getAllCommentPerson = (uuid) => {
 	return sequelize.query('select DISTINCT user_id from (select * from p_event_result where uuid = :uuid union select * from s_event_result where uuid = :uuid) as al order by al.create_time asc',
-		{replacements: {uuid}, type: sequelize.QueryTypes.SELECT})
+		{type: sequelize.QueryTypes.SELECT})
 		.then(data => data)
 }
 // 管理修改 状态
