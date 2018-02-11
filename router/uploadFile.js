@@ -34,7 +34,7 @@
 				const {path: tmPath, name, hash, type} = file
 				if (validateImg(type)) {
 					try {
-						const extname = path.extname(name)
+						const extname = path.extname(name) || '.png'
 						const eResult = `/uploads/${hash}${extname}`
 						const finalFile = path.resolve(__dirname, `..${eResult}`)
 						const result = await new Promise((r, j) => {

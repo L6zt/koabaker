@@ -56,7 +56,8 @@
 	const validateImg = (type) => {
 	        const typeList = [
 	        	'image/jpeg',
-		        'image/jpeg'
+		        'image/jpeg',
+		        'image/png'
 	        ]
 		  const index = typeList.findIndex(item => item === type)
 		  if (index === -1) {
