@@ -112,6 +112,17 @@ const createUser = (name, password, role) => {
 		return data
 	})
 }
+const editorUser = (name, password, role) => {
+	return User.update({
+		name,
+		password: md5(password),
+		role
+	},{
+		where: {
+			name
+		}
+	}).then(data => data)
+}
 const userRouter = (router) => {
 	// 生成用户
 	router.post('/user/create', userAuth(1), async ctx => {
@@ -136,7 +147,7 @@ const userRouter = (router) => {
 		}
 	})
 	// 获取全部用户
-	router.post('/user/getAllList',  userAuth(1),async ctx => {
+	router.post('/user/getAllList',  userAuth(2),async ctx => {
 		const {pageIndex, pageSize, sort, name} = ctx.request.body
 		const {user: {role}} = ctx.session
 		if (checkArg([pageIndex, pageSize]) && isNum(pageIndex) && isNum(pageIndex)) {
@@ -176,6 +187,25 @@ const userRouter = (router) => {
 			} catch (e) {
 				ctx.body  = fail({errMsg: e})
 			}
+		}
+	})
+	router.post('/user/editor', userAuth(2), async ctx => {
+		const {name, password, role} = ctx.request.body
+		const {role: mRole} = (ctx.session.user || {})
+		console.log(mRole)
+		if (checkArg([name, password, role])) {
+			if (mRole >= role) {
+				ctx.body = fail({errMsg: '权限不足'})
+				return
+			}
+			try {
+				const result = await editorUser(name, password, role)
+				ctx.body = success(result)
+			} catch (e) {
+				ctx.body = fail({errMsg: e})
+			}
+		} else {
+			ctx.body = fail({flag: 222})
 		}
 	})
 	// 删除用户
