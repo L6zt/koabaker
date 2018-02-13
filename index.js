@@ -1,5 +1,7 @@
 	require('./init')
+	const { URL } = require('url')
 	const Koa = require('koa')
+	const serve = require('koa-better-serve')
 	const session = require('koa-session')
 	const body = require('koa-body')
 	const app = new Koa()
@@ -19,13 +21,13 @@
 	app.use(session(CONFIG, app))
 	app.use(body())
 	//app.use(router)
+	app.use(async (ctx, next) => {
+		if (/^\/stUpload/.test(ctx.request.url)) {
+			await serve('./uploads/', '/stUpload')(ctx)
+		} else {
+			await next()
+		}
+	})
 	app.use(router.routes())
-	// app.use(ctx => {
-	// 	// ignore favicon
-	// 	if (ctx.path === '/favicon.ico') return
-	// 	let n = ctx.session.views || 0
-	// 	ctx.session.views = ++n
-	// 	ctx.body = n + ' views'
-	// })
 	app.listen(3000)
 	

@@ -8,6 +8,7 @@
   "dependencies": {
     "blueimp-md5": "^2.10.0",
     "koa": "^2.4.1",
+    "koa-better-serve": "^2.0.7",
     "koa-body": "^2.5.0",
     "koa-router": "^7.3.0",
     "koa-session": "^5.5.1",

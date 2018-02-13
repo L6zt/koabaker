@@ -13,7 +13,7 @@
 	// 获取用户信息
 	const getLoginMsg = (name, password) => {
 		return User.findOne({
-			attributes: ['name', 'role', 'uuid'],
+			attributes: ['name', 'role', 'uuid', 'pic', 'nick_name'],
 			where: {
 				name: name,
 				password: md5(password)
@@ -41,16 +41,16 @@
 				where: {
 					name
 				}
-			}.then(data => {
+			}).then(data => {
 				return data
 			})
-		)
+		
 	}
 	const authRouter = (router) => {
 		// router.use('/auth',userAuth)
 		router.post('/auth/getUserMsg', userAuth, async (ctx) => {
-			const {user: {role, uuid, name}} = ctx.session
-			ctx.body = success({role, uuid, name})
+			const {user: {role, uuid, name, pic, nick_name}} = ctx.session
+			ctx.body = success({role, uuid, name, pic, nick_name})
 		})
 		router.post('/auth/login', async ctx => {
 			const {name, password, code} = ctx.request.body
@@ -74,7 +74,7 @@
 						// ctx.session.code = null
 						return
 					} else {
-						result.role && (ctx.session.user = {name, role: result.role, uuid: result.uuid})
+						result.role && (ctx.session.user = {name, role: result.role, uuid: result.uuid, pic: result.pic, nick_name: result.nick_name})
 					}
 					ctx.session && (ctx.session.code = null)
 					// 前端登陆鉴权
@@ -104,7 +104,7 @@
 					ctx.body = fail({flag: 222})
 				}
 		})
-		router.post('/auth/modifyUserMsg', userAuth,async ctx => {
+		router.post('/auth/modifyUserMsg', userAuth, async ctx => {
 			const {user: {name, role}} = ctx.session
 			const {nick_name, pic} = ctx.request.body
 			if (nick_name || pic) {
@@ -122,8 +122,8 @@
 			}
 		})
 		router.post('/auth/quit', async ctx => {
-			ctx.session.user = null
-			ctx.cookies.set('auth_koa', null)
+			ctx.session = null
+			ctx.cookies.set('auth_koa', null, {maxAge: 0, signed: false, httpOnly: false, expires: new Date()})
 			ctx.body = success('已退出')
 		})
 		

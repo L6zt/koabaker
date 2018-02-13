@@ -33,14 +33,26 @@ const checkExist = (name) => {
 	})
 }
 // 获取下级用户
-const getAllUser = (pageIndex, pageSize, role) => {
+const getAllUser = (pageIndex, pageSize, role, name, sort = false) => {
+	const where = {
+	}
+	if (sort && sort < role) {
+		where['role'] = {
+			[Op.gt]: role
+		}
+	} else if (!sort) {
+		where['role'] = {
+			[Op.gt]: role
+		}
+	} else {
+		where['role'] = sort
+	}
+	name && (where['name'] = {
+		[Op.like]: [`%${name}%`]
+	})
 	return User.findAndCountAll({
-			attributes: ['name', 'role', 'uuid'],
-			where: {
-				role: {
-					[Op.gt]: [role]
-				}
-			},
+			attributes: ['name', 'role', 'uuid', 'pic', 'nick_name'],
+			where,
 		    offset: (pageIndex - 1) * pageSize,
 		    limit: pageSize,
 		    order: [['uuid', 'DESC']]
@@ -52,7 +64,7 @@ const getAllUser = (pageIndex, pageSize, role) => {
 // 查找维修员工
 const getWorkUser = (pageIndex, pageSize) => {
 	return User.findAndCountAll({
-		attributes: ['name', 'role', 'uuid'],
+		attributes: ['name', 'role', 'uuid', 'pic', 'nick_name'],
 		where: {
 			role: {
 				[Op.notIn]: [1, 2]
@@ -77,10 +89,13 @@ const getManagerUser = (pageIndex, pageSize) => {
 		order: [['uuid', 'DESC']]
 	}).then(data => data)
 }
-const deleteUser = (name) => {
+const deleteUser = (name, role) => {
 	return User.destroy({
 		where: {
-			name
+			name,
+			role: {
+				[Op.gt]: role
+			}
 		}
 	}).then(data => {
 		return data
@@ -122,11 +137,11 @@ const userRouter = (router) => {
 	})
 	// 获取全部用户
 	router.post('/user/getAllList',  userAuth(1),async ctx => {
-		const {pageIndex, pageSize} = ctx.request.body
+		const {pageIndex, pageSize, sort, name} = ctx.request.body
 		const {user: {role}} = ctx.session
 		if (checkArg([pageIndex, pageSize]) && isNum(pageIndex) && isNum(pageIndex)) {
 			try {
-				const allUser = await getAllUser(parseInt(pageIndex), parseInt(pageSize), role)
+				const allUser = await getAllUser(parseInt(pageIndex), parseInt(pageSize), role, name, sort)
 				ctx.body = success(allUser)
 			}
 			catch (e) {
@@ -166,9 +181,10 @@ const userRouter = (router) => {
 	// 删除用户
 	router.post('/user/delete', userAuth(1), async ctx => {
 		const {name} = ctx.request.body
+		const {role} = ctx.session.user
 		if (checkArg([name])) {
 			try {
-				const result = await deleteUser(name)
+				const result = await deleteUser(name, role)
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
