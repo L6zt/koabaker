@@ -84,14 +84,15 @@ const deleteEvent = ({uuid, postid}) => {
 // 		})
 // }
 const allEventList = ({ pageIndex, pageSize}) => {
-	return Event.findAllCount({
+	console.log(pageIndex, pageSize)
+	return Event.findAndCountAll({
 		offset: (pageIndex - 1) * pageSize,
 		limit: pageSize,
 		order: [['uuid', 'DESC']]
 	})
 }
 const mgEventList = ({postid, pageIndex, pageSize}) => {
-	return Event.findAllCount({
+	return Event.findAndCountAll({
 		where: {
 			postid
 		},
@@ -101,7 +102,7 @@ const mgEventList = ({postid, pageIndex, pageSize}) => {
 	})
 }
 const slEventList = ({solveid, pageIndex, pageSize}) => {
-	return Event.findAllCount({
+	return Event.findAndCountAll({
 		where: {
 			solveid
 		},
@@ -113,7 +114,7 @@ const slEventList = ({solveid, pageIndex, pageSize}) => {
 // 查找信息
 const getUserMsg = (uuid) => {
 	return User.findOne({
-		attributes: ['name', 'uuid', 'role'],
+		attributes: ['name', 'uuid', 'role', 'pic'],
 		where: {
 			uuid
 		}
@@ -122,9 +123,11 @@ const getUserMsg = (uuid) => {
 // 获取列表
 const getUserListMsg = (arg) => {
 	return User.findAll({
-		attributes: ['name', 'role', 'uuid'],
+		attributes: ['name', 'role', 'uuid', 'pic'],
 		where: {
-			[Op.in]: arg
+			uuid: {
+				[Op.in]: arg
+			}
 		}
 	}).then(data => data)
 }
@@ -223,7 +226,7 @@ const eventRouter = (router) => {
 		const {user: {uuid: ownid, role}} = ctx.session
 		let {pageIndex, pageSize, postid, solveid} = ctx.request.body
 		let result
-		if (checkArg(pageSize, pageIndex) && isNum(pageIndex) && isNum(pageSize)) {
+		if (checkArg([pageSize, pageIndex]) && isNum(pageIndex) && isNum(pageSize)) {
 			pageSize = parseInt(pageSize)
 			pageIndex = parseInt(pageIndex)
 		} else {
@@ -237,25 +240,23 @@ const eventRouter = (router) => {
 						result = await allEventList({pageIndex, pageSize})
 						rows = result.rows
 						if (rows) {
-							sidList = await uniqKey({target: rows, key: 'sloveid'})
-							pidList = await uniqKey({target: rows, key: 'ploveid'})
+							sidList = uniqKey({target: rows, key: 'solveid'})
+							pidList = uniqKey({target: rows, key: 'postid'})
+							console.log(sidList, pidList)
 							if (sidList) {
 								// 用户列表
-								sUser = await getUserListMsg(sidList)
+								sUser = await getUserListMsg(sidList.map(item => parseInt(item)))
 							}
 							if (pidList) {
-								pUser = await getUserListMsg(pidList)
+								pUser = await getUserListMsg(pidList.map(item => parseInt(item)))
 							}
 							ctx.body = success({
-								data: {
 									sUser: sUser || [],
 									pUser: pUser || [],
 									eventList: result
-								}
 							})
 							return
 						}
-						
 						return
 				}
 				case 2: {
@@ -270,11 +271,9 @@ const eventRouter = (router) => {
 						 	sUser = await getUserListMsg(sidList)
 						 }
 						ctx.body = success({
-							data: {
 								sUser: sUser || [],
 								pUser: [],
 								list: result
-							}
 						})
 						return
 					} else {
@@ -294,11 +293,9 @@ const eventRouter = (router) => {
 							pUser = await getUserListMsg(pidList)
 						}
 						ctx.body = success({
-							data: {
 								sUser: [],
 								pUser: pUser ||[],
 								list: result
-							}
 						})
 						return
 					} else {
@@ -307,8 +304,6 @@ const eventRouter = (router) => {
 					}
 				}
 			}
-			
-			ctx.body = success(result)
 		} catch (e) {
 			ctx.body = fail({errMsg: e})
 		}

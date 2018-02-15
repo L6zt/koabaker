@@ -125,7 +125,7 @@ const editorUser = (name, password, role) => {
 }
 const userRouter = (router) => {
 	// 生成用户
-	router.post('/user/create', userAuth(1), async ctx => {
+	router.post('/user/create', userAuth(2), async ctx => {
 		const {name, password, role} = ctx.request.body
 		if (checkArg([name, password, role])) {
 			try {

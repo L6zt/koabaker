@@ -25,7 +25,7 @@
 				const id = item[key]
 				id && (md[id] = null)
 			})
-			result = Object.keys(target)
+			result = Object.keys(md)
 			if (result.length === 0) {
 				return null
 			} else {
