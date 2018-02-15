@@ -31,9 +31,9 @@ const userAuth = (role) => {
 	}
 }
 ///
-const createEvent = ({title, url, content, uuid}) => {
+const createEvent = ({title, solveid, content, uuid}) => {
 	return Event.create({
-		title, url, content, postid: uuid
+		title, solveid, content, postid: uuid
 	}).then(data => {
 		return data
 	})
@@ -192,11 +192,11 @@ const eventRouter = (router) => {
 	// router.use('/auth',userAuth)
 	// 事件生成
 	router.post('/event/create', userAuth(2) ,async ctx => {
-		const {title, url, content} = ctx.request.body
+		const {title, solveid, content} = ctx.request.body
 		const {user: {uuid}} = ctx.session
-		if (checkArg([title, url, content])) {
+		if (checkArg([title, solveid, content])) {
 			try {
-				const result = await  createEvent({title, url, content, uuid})
+				const result = await  createEvent({title, solveid, content, uuid})
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body = fail({errMsg: e})

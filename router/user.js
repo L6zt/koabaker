@@ -62,16 +62,12 @@ const getAllUser = (pageIndex, pageSize, role, name, sort = false) => {
 		})
 }
 // 查找维修员工
-const getWorkUser = (pageIndex, pageSize) => {
+const getWorkUser = () => {
 	return User.findAndCountAll({
 		attributes: ['name', 'role', 'uuid', 'pic', 'nick_name'],
 		where: {
-			role: {
-				[Op.notIn]: [1, 2]
-			}
+			role: 3
 		},
-		offset: (pageIndex - 1) * pageSize,
-		limit: pageSize,
 		order: [['uuid', 'DESC']]
 	}).then(data => {
 		return data
@@ -162,32 +158,14 @@ const userRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	// 获取管理人员
-	router.post('/user/getManagerUser', userAuth(1), async ctx => {
-		const {pageIndex, pageSize} = ctx.request.body
-		console.log( isNum(pageIndex), pageIndex)
-		if (checkArg([pageIndex, pageSize]) && isNum(pageIndex) && isNum(pageSize)) {
-			try {
-				const result = await getManagerUser(parseInt(pageIndex),parseInt(pageSize))
-				ctx.body = success(result)
-			} catch (e) {
-				ctx.body = fail({errMsg: e})
-			}
-		} else  {
-			ctx.body = fail({flag: 222})
-		}
-	})
 	// 获取维修员工
 	router.post('/user/getWorkList', userAuth(2), async ctx => {
-		const {pageIndex, pageSize} = ctx.request.body
-		if (checkArg([pageIndex, pageSize]) && isNum(pageIndex) && isNum(pageIndex)) {
 			try {
-				const result = await getWorkUser(parseInt(pageIndex),parseInt(pageSize))
+				const result = await getWorkUser()
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body  = fail({errMsg: e})
 			}
-		}
 	})
 	router.post('/user/editor', userAuth(2), async ctx => {
 		const {name, password, role} = ctx.request.body
