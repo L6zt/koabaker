@@ -170,7 +170,6 @@ const userRouter = (router) => {
 	router.post('/user/editor', userAuth(2), async ctx => {
 		const {name, password, role} = ctx.request.body
 		const {role: mRole} = (ctx.session.user || {})
-		console.log(mRole)
 		if (checkArg([name, password, role])) {
 			if (mRole >= role) {
 				ctx.body = fail({errMsg: '权限不足'})

@@ -146,23 +146,23 @@ const getThisEvent = ({uuid, postid, solveid}) => {
 	}).then(data => data)
 }
 // 查看 该事件所有 对话
-const getEventAllComment = (uuid) => {
-	return sequelize.query('select * from (select * from p_event_result where uuid = :uuid union select * from s_event_result where uuid = :uuid) as al order by al.create_time asc',
-		{replacements: {uuid}, type: sequelize.QueryTypes.SELECT})
+const getEventAllComment = (event_id) => {
+	return sequelize.query('select * from (select * from p_event_result where event_id = :event_id union select * from s_event_result where event_id = :event_id) as al order by al.create_time asc;',
+		{replacements: {event_id}, type: sequelize.QueryTypes.SELECT})
 		.then(data => data)
 }
-// 管理修改 状态
-const mgEventComment = ({uuid, comment, user_id}) => {
+
+const mgEventComment = ({event_id, comment, user_id}) => {
 	return PeventResult.upsert({
-		uuid,
+		event_id,
 		comment,
 		user_id
 	}).then(data => data)
 }
-// 解决 修改状态
-const slEventComment = ({uuid, comment, user_id}) => {
+
+const slEventComment = ({event_id, comment, user_id}) => {
 	return SeventResult.upsert({
-		uuid,
+		event_id,
 		comment,
 		user_id
 	}).then(data => data)
@@ -222,7 +222,7 @@ const eventRouter = (router) => {
 	})
 
 	// 事件列表  状态 未派遣 进行中 已完成
-	router.post('/event/getList', userAuth(2), async ctx => {
+	router.post('/event/getList', userAuth(3), async ctx => {
 		const {user: {uuid: ownid, role}} = ctx.session
 		let {pageIndex, pageSize, postid, solveid} = ctx.request.body
 		let result
@@ -242,7 +242,6 @@ const eventRouter = (router) => {
 						if (rows) {
 							sidList = uniqKey({target: rows, key: 'solveid'})
 							pidList = uniqKey({target: rows, key: 'postid'})
-							console.log(sidList, pidList)
 							if (sidList) {
 								// 用户列表
 								sUser = await getUserListMsg(sidList.map(item => parseInt(item)))
@@ -260,20 +259,24 @@ const eventRouter = (router) => {
 						return
 				}
 				case 2: {
-					let rows, sidList, sUser
+					let rows, sidList, pidList, sUser, pUser
 					if (checkArg([postid])) {
 						 result = await mgEventList({postid, pageIndex, pageSize})
 						 rows = result.rows
 						 if (rows) {
 						 	sidList = uniqKey({target: rows, key: 'solveid'})
+							pidList = uniqKey({target: rows, key: 'postid'})
 						 }
 						 if (sidList) {
 						 	sUser = await getUserListMsg(sidList)
 						 }
+						if (pidList) {
+							pUser = await getUserListMsg(pidList.map(item => parseInt(item)))
+						}
 						ctx.body = success({
 								sUser: sUser || [],
-								pUser: [],
-								list: result
+								pUser,
+								eventList: result
 						})
 						return
 					} else {
@@ -282,20 +285,24 @@ const eventRouter = (router) => {
 					}
 				}
 				default : {
-					let rows, pidList, pUser
-					if (checkArg([postid])) {
-						result = await mgEventList({solveid, pageIndex, pageSize})
+					let rows, pidList, pUser, sidList, sUser
+					if (checkArg([solveid])) {
+						result = await slEventList({solveid, pageIndex, pageSize})
 						rows = result.rows
 						if (rows) {
+							sidList = uniqKey({target: rows, key: 'solveid'})
 							pidList = uniqKey({target: rows, key: 'postid'})
 						}
+						if (sidList) {
+							sUser = await getUserListMsg(sidList)
+						}
 						if (pidList) {
-							pUser = await getUserListMsg(pidList)
+							pUser = await getUserListMsg(pidList.map(item => parseInt(item)))
 						}
 						ctx.body = success({
-								sUser: [],
+								sUser: sUser || [],
 								pUser: pUser ||[],
-								list: result
+								eventList: result
 						})
 						return
 					} else {
@@ -309,11 +316,12 @@ const eventRouter = (router) => {
 		}
 	})
 	// 事件详情
-	router.post('/event/getEventDetail', userAuth(2), async ctx => {
-		const {uuid} = ctx.request.body
+	router.post('/event/getEventComment', userAuth(3), async ctx => {
+		let {uuid} = ctx.request.body
 		const {user: {name, role, uuid: ownid}} = ctx.session
 		let comments, userIdList, userList
-		if (checkArg([uuid])) {
+		uuid = parseInt(uuid)
+		if (checkArg([uuid]) && !isNaN(uuid)) {
 			try {
 				switch (role) {
 					case 1: {
@@ -322,16 +330,16 @@ const eventRouter = (router) => {
 					}
 					case 2: {
 						const isHas = await getThisEvent({uuid, postid: ownid})
-						if (isHas) {
+						if (!isHas) {
 							ctx.body = fail({errMsg: '无查看权限'})
 							return
 						}
-						comments  = await getEventAllComment(uuid)
+						comments = await getEventAllComment(uuid)
 						break
 					}
 					default : {
 						const isHas = await getThisEvent({uuid, solveid: ownid})
-						if (isHas) {
+						if (!isHas) {
 							ctx.body = fail({errMsg: '无查看权限'})
 							return
 						}
@@ -339,11 +347,11 @@ const eventRouter = (router) => {
 						break
 					}
 				}
-				if (comments) {
+				if (comments && comments.length) {
 					userIdList = uniqKey({target: comments, key: 'user_id'})
 					userList = await getUserListMsg(userIdList)
 				}
-				ctx.body = success({commentList: comments, userList: userList || []})
+				ctx.body = success({commentList: comments || [], userList: userList || []})
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
 			}
@@ -351,26 +359,25 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	router.post('/event/mg/event', userAuth(8), async ctx => {
-		const {uuid, comment} = ctx.request.body
-		const {user: {name}} = ctx.session
-		if (checkArg([uuid, comment])) {
+	router.post('/event/post/comment', userAuth(3), async ctx => {
+		let {uuid, comment} = ctx.request.body
+		const {user: {role, uuid: ownid}} = ctx.session
+		let result
+		uuid = parseInt(uuid)
+		if (checkArg([uuid, comment]) && !isNaN(uuid)) {
 			try {
-				const result = await mgEventComment({uuid, comment})
-				ctx.body = success(result)
-			} catch (e) {
-				ctx.body = fail({errMsg: e})
-			}
-		} else {
-			ctx.body = fail({flag: 222})
-		}
-	})
-	router.post('/event/sl/event', userAuth(8), async ctx => {
-		const {uuid, comment} = ctx.request.body
-		const {user: {name}} = ctx.session
-		if (checkArg([uuid, comment])) {
-			try {
-				const result = await slEventComment({uuid, comment})
+				switch (role) {
+					case 1: {
+					}
+					case 2: {
+						result = await mgEventComment({event_id: uuid, comment, user_id: ownid})
+						break;
+					}
+					case 3: {
+						result = await slEventComment({event_id: uuid, comment, user_id: ownid})
+						break;
+					}
+				}
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
@@ -393,19 +400,19 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	router.post('/event/change/sl/status', userAuth(8), async ctx => {
-		const {uuid, status} = ctx.request.body
-		const {uuid: solveid} = ctx.session.user
-		if (checkArg([uuid, status])) {
-			try {
-				const result = await slEventHanleStatus({uuid, status, solveid})
-				ctx.body = success(result)
-			} catch (e) {
-				ctx.body = fail({errMsg: e})
-			}
-		} else {
-			ctx.body = fail({flag: 222})
-		}
-	})
+	// router.post('/event/change/sl/status', userAuth(8), async ctx => {
+	// 	const {uuid, status} = ctx.request.body
+	// 	const {uuid: solveid} = ctx.session.user
+	// 	if (checkArg([uuid, status])) {
+	// 		try {
+	// 			const result = await slEventHanleStatus({uuid, status, solveid})
+	// 			ctx.body = success(result)
+	// 		} catch (e) {
+	// 			ctx.body = fail({errMsg: e})
+	// 		}
+	// 	} else {
+	// 		ctx.body = fail({flag: 222})
+	// 	}
+	// })
 }
 module.exports = eventRouter
