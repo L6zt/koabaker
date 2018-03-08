@@ -7,7 +7,7 @@
     "merge_logs"      : true,
     "type": "out",
     "log_date_format" : "YYYY-MM-DD HH:mm Z",
-    "watch": [ "index.js","config.js", "init", "database","response", "router", "utils"],
+    "watch": [ "index.js","config.js", "init", "database","response", "router", "utils", "socket"],
     "ignore_watch" : ["node_modules"],
     "source_map_support": true
   }]

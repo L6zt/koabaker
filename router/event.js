@@ -38,12 +38,10 @@ const createEvent = ({title, solveid, content, uuid}) => {
 		return data
 	})
 }
-const deleteEvent = ({uuid, postid}) => {
+const deleteEvent = ({uuid, postid, role}) => {
+	const where = role === 1 ? {uuid} : {uuid, postid}
 	return Event.destroy({
-		where: {
-			uuid,
-			postid
-		}
+		where
 	}).then(data => {
 		return data
 	})
@@ -208,10 +206,11 @@ const eventRouter = (router) => {
 	// 事件删除
 	router.post('/event/delete',userAuth(2), async ctx => {
 		const {uuid} = ctx.request.body
-		const {user: {uuid: postid}} = ctx.session
+		const {user: {uuid: postid, role}} = ctx.session
 		if (checkArg([uuid])) {
 			try {
-				const result = await  deleteEvent({uuid, postid})
+				// 逻辑判断放在哪里
+				const result = await  deleteEvent({uuid, postid, role})
 				ctx.body = success(result)
 			} catch (e) {
 				ctx.body = fail({errMsg: e})
@@ -400,19 +399,5 @@ const eventRouter = (router) => {
 			ctx.body = fail({flag: 222})
 		}
 	})
-	// router.post('/event/change/sl/status', userAuth(8), async ctx => {
-	// 	const {uuid, status} = ctx.request.body
-	// 	const {uuid: solveid} = ctx.session.user
-	// 	if (checkArg([uuid, status])) {
-	// 		try {
-	// 			const result = await slEventHanleStatus({uuid, status, solveid})
-	// 			ctx.body = success(result)
-	// 		} catch (e) {
-	// 			ctx.body = fail({errMsg: e})
-	// 		}
-	// 	} else {
-	// 		ctx.body = fail({flag: 222})
-	// 	}
-	// })
 }
 module.exports = eventRouter
