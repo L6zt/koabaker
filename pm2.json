@@ -2,6 +2,8 @@
   "apps": [{
     "name": "kao::backer",
     "script": "index.js",
+    "instances" : 1,
+    "max_memory_restart": "100M",
     "error_file"      : "log/err.log",
     "out_file"        : "log/out.log",
     "merge_logs"      : true,
@@ -9,6 +11,16 @@
     "log_date_format" : "YYYY-MM-DD HH:mm Z",
     "watch": [ "index.js","config.js", "init", "database","response", "router", "utils", "socket"],
     "ignore_watch" : ["node_modules"],
-    "source_map_support": true
+    "source_map_support": true,
+    "env": {
+      "NODE_ENV": "development",
+      "uploadDomain": "http://localhost:3000",
+      "port": 3000
+    },
+    "env_production": {
+      "NODE_ENV": "production",
+      "uploadDomain": "http://static.jcmark.cn",
+      "port": 7013
+    }
   }]
 }

@@ -46,7 +46,7 @@
 								r(eResult)
 							})
 						})
-						ctx.body = success({path:  `http://localhost:3000/stUpload${result.replace(/^\/uploads/, '')}`})
+						ctx.body = success({path:  `${process.env.uploadDomain}stUpload${result.replace(/^\/uploads/, '')}`})
 					} catch (e) {
 					   ctx.body = fail({flag: 500})
 					}

@@ -9,7 +9,6 @@
 	const socket = require('./socket')
 	const http = require('http')
 	let server
-	
 	app.keys = ['some secret hurr']
 	const CONFIG = {
 		key: 'koa:sess',
@@ -31,6 +30,6 @@
 	})
 	app.use(router.routes())
 	server = http.createServer(app.callback())
-	server.listen(3000)
+	server.listen(process.env.port)
 	socket(server)
 	

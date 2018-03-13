@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
 		create_time: {
 			type: Sequelize.DATE,
 			defaultValue: DataTypes.NOW
+		},
+		status: {
+			type: Sequelize.INTEGER(1).UNSIGNED,
+			default: 0
 		}
 	},{
 		indexes: [
