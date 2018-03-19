@@ -65,12 +65,22 @@
 		  }
 		  return true
 	}
+	const getCookie = (cookie) => {
+		const ay =  cookie.replace(/\s/g,'').split(';')
+		const result = {}
+		ay.forEach(item => {
+			const kv = item.split('=')
+			result[kv[0]] = kv[1]
+		})
+		return result
+	}
 	module.exports = {
 		add,
 		uniqKey,
 		checkArg,
 		loadRouterMoudles,
 		validateImg,
-		isNum
+		isNum,
+		getCookie
 	}
 	

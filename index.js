@@ -1,3 +1,4 @@
+	require('babel-register')
 	require('./init')
 	const { URL } = require('url')
 	const Koa = require('koa')

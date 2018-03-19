@@ -1,5 +1,5 @@
 	const Sequelize = require('sequelize')
-	const sequelize = new Sequelize('koa', 'root', '97019jiao', {
+	const sequelize = new Sequelize('koa', '***', '***', {
 		host: 'localhost',
 		dialect: 'mysql',
 		pool: {
